@@ -59,7 +59,8 @@ int main(){
                 0.0f,1.0f,2.0f,
                 0.0f,0.0f,1.0f;
     
-    std::cout << translate * rotation * p<< std::endl;
+    p = translate * rotation * p;
+    std::cout << p<< std::endl;
 
     return 0;
 }
