@@ -19,21 +19,40 @@ Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
     return view;
 }
 
-Eigen::Matrix4f get_model_matrix(float rotation_angle)
+Eigen::Matrix4f get_model_matrix(float rotation_angle, int mark)
 {
     Eigen::Matrix4f model = Eigen::Matrix4f::Identity();
 
     float angle = rotation_angle /180.0*acos(-1);
 
     Eigen::Matrix4f rotationByZ;
+    Eigen::Matrix4f rotationByX;
+    Eigen::Matrix4f rotationByY;
 
     rotationByZ << std::cos(angle),-std::sin(angle),0.f,0.f,
                     std::sin(angle),std::cos(angle),0.f,0.f,
                     0.f,0.f,1.f,0.f,
                     0.f,0.f,0.f,1.f;
-    
-    model = rotationByZ * model;
 
+    rotationByX << 1.f,0.f,0.f,0.f,
+                    0.f,std::cos(angle),-std::sin(angle),0.f,
+                    0.f,std::sin(angle),std::cos(angle),0.f,
+                    0.f,0.f,0.f,1.f;
+
+    rotationByY << std::cos(angle),0.f,std::sin(angle),0.f,
+                    0.f,1.f,0.f,0.f,
+                    -std::sin(angle),0.f,std::cos(angle),0.f,
+                    0.f,0.f,0.f,1.f;
+    
+    // model = rotationByX * rotationByY * rotationByZ * model;
+
+    if (mark == 1){
+        model =  rotationByX * model;
+    } else if (mark == 2){
+        model =  rotationByY * model;
+    } else if (mark == 3){
+        model =  rotationByZ * model;
+    }
 
     // TODO: Implement this function
     // Create the model matrix for rotating the triangle around the Z axis.
@@ -79,6 +98,8 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 int main(int argc, const char** argv)
 {
     float angle = 0;
+    int mark = 3;
+
     bool command_line = false;
     std::string filename = "output.png";
 
@@ -109,7 +130,7 @@ int main(int argc, const char** argv)
     if (command_line) {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
-        r.set_model(get_model_matrix(angle));
+        r.set_model(get_model_matrix(angle,mark));
         r.set_view(get_view_matrix(eye_pos));
         r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
@@ -125,7 +146,7 @@ int main(int argc, const char** argv)
     while (key != 27) {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
-        r.set_model(get_model_matrix(angle));
+        r.set_model(get_model_matrix(angle,mark));
         r.set_view(get_view_matrix(eye_pos));
         r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
@@ -140,9 +161,27 @@ int main(int argc, const char** argv)
 
         if (key == 'a') {
             angle += 10;
+            mark = 2;
         }
         else if (key == 'd') {
             angle -= 10;
+            mark = 2;
+        }
+        else if (key == 'q') {
+            angle += 10;
+            mark = 1;
+        }
+        else if (key == 'e') {
+            angle -= 10;
+            mark = 1;
+        }
+        else if (key == 'z') {
+            angle += 10;
+            mark = 3;
+        }
+        else if (key == 'c') {
+            angle -= 10;
+            mark = 3;
         }
     }
 
