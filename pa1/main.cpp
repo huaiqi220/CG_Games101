@@ -43,8 +43,8 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     // Students will implement this function
     // eye_fov x 方向视角， aspect_ratio 宽高比
 
-    float fovx = eye_fov;
-    float fovy = fovx * aspect_ratio;
+    float fovy = eye_fov;
+    float fovx = fovy * aspect_ratio;
 
     // P = | 1/tan(fovy/2)     0             0                     0               |
     //     |       0       1/tan(fovx/2)     0                     0               |
@@ -61,7 +61,7 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 
     projection << item1,0.f,0.f,0.f,
                     0.f,item2,0.f,0.f,
-                    0.f,0.f,item3,0.f,
+                    0.f,0.f,item3,item4,
                     0.f,0.f,-1.0f,0.f;
 
     return projection;
