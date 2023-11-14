@@ -67,8 +67,28 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     return projection;
 }
 
+Eigen::Matrix4f get_rotation(Vector3f axis, float angle){
+    Eigen::Matrix3f matrixK;
+    matrixK << 0.f,-axis(2),axis(1),
+                axis(2),0.f,-axis(0),
+                -axis(1),axis(0),0.f;
+    
+    Eigen::Matrix3f rotation = Eigen::Matrix3f::Identity();
+    angle = angle / 180 * std::acos(-1);
+    Eigen::Matrix3f I = Eigen::Matrix3f::Identity();
+    rotation = std::cos(angle) * I + (1 - std::cos(angle)) * axis * axis.transpose() + std::sin(angle) * matrixK;
+    Eigen::Matrix4f result = Eigen::Matrix4f::Identity();
+    result.block(0,0,3,3) << rotation;
+    // std::cout << result << '\n';
+    return result;
+
+}
+
 int main(int argc, const char** argv)
 {
+    
+    
+    
     float angle = 0;
     bool command_line = false;
     std::string filename = "output.png";
