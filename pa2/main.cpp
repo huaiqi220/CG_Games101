@@ -66,7 +66,8 @@ int main(int argc, const char** argv)
     if (argc == 2)
     {
         command_line = true;
-        filename = std::string(argv[1]);
+        filename = "test.jpg";
+        // filename = std::string(argv[1]);
     }
 
     rst::rasterizer r(700, 700);

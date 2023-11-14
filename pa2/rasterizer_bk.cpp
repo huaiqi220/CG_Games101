@@ -181,9 +181,12 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     {
         for (int j = bottomy; j < topy; j++)
         {
-
-            
-            if(insideTriangle(i+ 0.5f,j+0.5f,t.v))
+            int num = 0;
+            if(insideTriangle(i+ 0.25f,j+0.25f,t.v)) num++;
+            if(insideTriangle(i+ 0.75f,j+0.75f,t.v)) num++;
+            if(insideTriangle(i+ 0.25f,j+0.75f,t.v)) num++;
+            if(insideTriangle(i+ 0.75f,j+0.25f,t.v)) num++;
+            if(num > 0)
             {
                 int index = get_index(i,j);
                 std::tuple<float, float, float> depw = computeBarycentric2D(i,j,t.v);
@@ -193,7 +196,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                 z_interpolated *= w_reciprocal;
                 if (z_interpolated < depth_buf[index]) {
                     depth_buf[index] = z_interpolated;
-                    set_pixel(Vector3f(i,j,z_interpolated),t.getColor());
+                    set_pixel(Vector3f(i,j,z_interpolated),t.getColor() * num / 4);
                 };
 
             }

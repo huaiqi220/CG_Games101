@@ -40,46 +40,24 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 }
 
 
-// static bool insideTriangle(int x, int y, const Vector3f* _v)
-// {   
-//     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
-//     auto v0_v1 = _v[1] - _v[0];
-//     auto v1_v2 = _v[2] - _v[1];
-//     auto v2_v0 = _v[0] - _v[2];
-//     auto v0_P = Vector3f(x, y, _v[0].z()) - _v[0];
-//     auto v1_P = Vector3f(x, y, _v[1].z()) - _v[1];
-//     auto v2_P = Vector3f(x, y, _v[2].z()) - _v[2];
-
-//     auto v0pCross = v0_v1.cross(v0_P);
-//     auto v1pCross = v1_v2.cross(v1_P);
-//     auto v2pCross = v2_v0.cross(v2_P);
-
-//     if (v0pCross.dot(v1pCross) >= 0 && v0pCross.dot(v2pCross) >= 0)
-//         return true;
-//     return false;
-// }
 static bool insideTriangle(int x, int y, const Vector3f* _v)
 {   
-     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
-     float x_mid = x + 0.5;
-     float y_mid = y + 0.5;
-     Eigen::Vector2f CA(_v[0].x()-_v[2].x(), _v[0].y()-_v[2].y());
-     Eigen::Vector2f AP(x_mid -_v[0].x(), y_mid -_v[0].y());
-     Eigen::Vector2f AB(_v[1].x()-_v[0].x(), _v[1].y()-_v[0].y());
-     Eigen::Vector2f BP(x_mid-_v[1].x(), y_mid-_v[1].y());
-     Eigen::Vector2f BC(_v[2].x()-_v[1].x(), _v[2].y()-_v[1].y());
-     Eigen::Vector2f CP(x_mid-_v[2].x(), y_mid-_v[2].y());
-    
-     // cross product have equal sign
-     if ((CA.x()*AP.y()-CA.y()*AP.x()>=0) == (AB.x()*BP.y()-AB.y()*BP.x()>=0) && (AB.x()*BP.y()-AB.y()*BP.x()>=0) == (BC.x()*CP.y()-BC.y()*CP.x()>=0)) {
-         return true;    
-     } else {
-         return false;
-     } 
+    // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
+    auto v0_v1 = _v[1] - _v[0];
+    auto v1_v2 = _v[2] - _v[1];
+    auto v2_v0 = _v[0] - _v[2];
+    auto v0_P = Vector3f(x, y, _v[0].z()) - _v[0];
+    auto v1_P = Vector3f(x, y, _v[1].z()) - _v[1];
+    auto v2_P = Vector3f(x, y, _v[2].z()) - _v[2];
 
+    auto v0pCross = v0_v1.cross(v0_P);
+    auto v1pCross = v1_v2.cross(v1_P);
+    auto v2pCross = v2_v0.cross(v2_P);
+
+    if (v0pCross.dot(v1pCross) >= 0 && v0pCross.dot(v2pCross) >= 0)
+        return true;
+    return false;
 }
-
-
 
 
 
@@ -146,31 +124,44 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
 
     // TODO : Find out the bounding box of current triangle.
 
-    int xMin, yMin, xMax, yMax;
-    xMin = std::floor(std::min(std::min(v[0].x(),v[1].x()),v[2].x()));
-    yMin = std::floor(std::min(std::min(v[0].y(), v[1].y()), v[2].y()));
-    xMax = std::ceil(std::max(std::max(v[0].x(), v[1].x()), v[2].x()));
-    yMax = std::ceil(std::max(std::max(v[0].y(), v[1].y()), v[2].y()));
+    Eigen::Vector4f p1 = v[0];
+    Eigen::Vector4f p2 = v[1];
+    Eigen::Vector4f p3 = v[2];
+
+    auto p1x = p1(0);
+    auto p1y = p1(1);
+    auto p2x = p2(0);
+    auto p2y = p2(1);
+    auto p3x = p3(0);
+    auto p3y = p3(1);
+
+    auto leftx = std::min(std::min(p1x,p2x),p3x);
+    auto rightx = std::max(std::max(p1x,p2x),p3x);
+
+    auto bottomy = std::min(std::min(p1y,p2y),p3y);
+    auto topy = std::max(std::max(p1y,p2y),p3y);
 
 
     // iterate through the pixel and find if the current pixel is inside the triangle
 
-    for (auto i = xMin; i <= xMax; i++)
+    for (int i = leftx;i < rightx;i++)
     {
-        for (auto j = yMin; j <= yMax; j++)
+        for (int j = bottomy; j < topy; j++)
         {
-            if (insideTriangle(i+0.5f, j+0.5f,t.v))
+
+            
+            if(insideTriangle(i+ 0.25f,j+0.25f,t.v))
             {
+                int index = get_index(i,j);
                 auto[alpha, beta, gamma] = computeBarycentric2D(i, j, t.v);
                 float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
-                int index = get_index(i, j);
-                if (depth_buf[index] > z_interpolated)
-                {
-                    depth_buf[index] = z_interpolated; // 更新深度缓冲区
+                if (z_interpolated < depth_buf[index]) {
+                    depth_buf[index] = z_interpolated;
                     set_pixel(Vector3f(i,j,z_interpolated),t.getColor());
-                }
+                };
+
             }
         }
     }
